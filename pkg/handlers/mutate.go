@@ -15,27 +15,29 @@ const (
 
 func MutateHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		mutateFunc(w, r)
+		if err := mutateFunc(w, r); err != nil {
+			log.Printf("Could not handle the request: %+v", err)
+		}
 	})
 }
 
-func mutateFunc(w http.ResponseWriter, r *http.Request) ([]byte, error) {
+func mutateFunc(w http.ResponseWriter, r *http.Request) error {
 	log.Print("Handling webhook request ...")
 
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		return nil, fmt.Errorf("invalid method %s, only POST requests are allowed", r.Method)
+		return fmt.Errorf("invalid method %s, only POST requests are allowed", r.Method)
 	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		return nil, fmt.Errorf("could not read request body: %v", err)
+		return fmt.Errorf("could not read request body: %v", err)
 	}
 
 	if contentType := r.Header.Get("Content-Type"); contentType != jsonContentType {
 		w.WriteHeader(http.StatusBadRequest)
-		return nil, fmt.Errorf("unsupported content type %s, only %s is supported", contentType, jsonContentType)
+		return fmt.Errorf("unsupported content type %s, only %s is supported", contentType, jsonContentType)
 	}
 
 	var writeErr error
@@ -51,5 +53,5 @@ func mutateFunc(w http.ResponseWriter, r *http.Request) ([]byte, error) {
 	if writeErr != nil {
 		log.Printf("Could not write response: %v", writeErr)
 	}
-	return nil, nil
+	return nil
 }

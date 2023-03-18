@@ -9,12 +9,6 @@ import (
 func setupHandler() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.Handle("/mutate", handlers.MutateHandler())
-	//mux.Handle("/validate", webhookHandler(validateFunc))
+	mux.Handle("/validate", handlers.ValidateHandler())
 	return mux
 }
-
-/*func validateHandler() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		validateFunc(w, r)
-	})
-}*/
