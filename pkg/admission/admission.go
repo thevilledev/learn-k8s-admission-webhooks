@@ -45,9 +45,21 @@ func Admit(body []byte) ([]byte, error) {
 		}
 	}
 
+	arResp.Response.Allowed = true
+
+	if len(patchOps) != 0 {
+		patchBytes, err := json.Marshal(patchOps)
+		if err != nil {
+			return nil, fmt.Errorf("error while marshalling patch bytes: %+v", err)
+		}
+		arResp.Response.Patch = patchBytes
+		arResp.Response.PatchType = new(k8sadmission.PatchType)
+		*arResp.Response.PatchType = k8sadmission.PatchTypeJSONPatch
+	}
+
 	bytes, err := json.Marshal(&arResp)
 	if err != nil {
-		return nil, fmt.Errorf("marshaling response: %v", err)
+		return nil, fmt.Errorf("error while marshalling admission response: %+v", err)
 	}
 	return bytes, nil
 }

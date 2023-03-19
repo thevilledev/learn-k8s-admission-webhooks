@@ -8,8 +8,8 @@ import (
 	k8sadmission "k8s.io/api/admission/v1"
 )
 
-func TestMutatesValidRequest(t *testing.T) {
-	rawJSON := `{
+func TestValidMutationRequest(t *testing.T) {
+	payload := `{
 		"kind": "AdmissionReview",
 		"apiVersion": "admission.k8s.io/v1",
 		"request": {
@@ -124,25 +124,40 @@ func TestMutatesValidRequest(t *testing.T) {
 			}
 		}
 	}`
-	response, err := Admit([]byte(rawJSON))
+	resp, err := Admit([]byte(payload))
 	if err != nil {
 		t.Errorf("AdmissionRequest failed with error: %s", err)
 	}
 
 	r := k8sadmission.AdmissionReview{}
-	err = json.Unmarshal(response, &r)
+	err = json.Unmarshal(resp, &r)
 	assert.NoError(t, err, "failed to unmarshal with error: %s", err)
 
-	/*rr := r.Response
-	assert.Equal(t, `[{"op":"replace","path":"/spec/containers/0/image","value":"debian"}]`, string(rr.Patch))
-	assert.Contains(t, rr.AuditAnnotations, "mutateme")*/
-
+	rr := r.Response
+	assert.Equal(t, `[{"op":"replace","path":"/spec/containers/0/image","value":"debian:latest"}]`, string(rr.Patch))
+	assert.Equal(t, true, rr.Allowed)
 }
 
 func TestErrorsOnInvalidJson(t *testing.T) {
-	rawJSON := `Wut ?`
-	_, err := Admit([]byte(rawJSON))
+	payload := `Everything here is so cold / Everything here is so dark`
+	_, err := Admit([]byte(payload))
 	if err == nil {
 		t.Error("did not fail when sending invalid json")
 	}
+}
+
+func TestEmptyRequest(t *testing.T) {
+	payload := `{
+		"kind": "AdmissionReview",
+		"apiVersion": "admission.k8s.io/v1",
+		"request": {}
+	}`
+	resp, err := Admit([]byte(payload))
+	assert.NoError(t, err)
+
+	r := k8sadmission.AdmissionReview{}
+	err = json.Unmarshal(resp, &r)
+	assert.NoError(t, err, "failed to unmarshal with error: %s", err)
+
+	assert.Equal(t, true, r.Response.Allowed)
 }
