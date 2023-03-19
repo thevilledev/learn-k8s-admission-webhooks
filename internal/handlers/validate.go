@@ -6,7 +6,11 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/thevilledev/learn-admission-controllers/pkg/admission/validate"
+	"github.com/thevilledev/learn-admission-controllers/pkg/admission"
+)
+
+const (
+	jsonContentType = `application/json`
 )
 
 func ValidateHandler() http.Handler {
@@ -37,7 +41,7 @@ func validateFunc(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	var writeErr error
-	if bytes, err := validate.Func(body); err != nil {
+	if bytes, err := admission.Admit(body); err != nil {
 		log.Printf("Error handling webhook request: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		_, writeErr = w.Write([]byte(err.Error()))

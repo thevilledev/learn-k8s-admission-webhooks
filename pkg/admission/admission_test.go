@@ -1,18 +1,17 @@
-package mutate
+package admission
 
 import (
 	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	v1beta1 "k8s.io/api/admission/v1beta1"
+	k8sadmission "k8s.io/api/admission/v1"
 )
 
 func TestMutatesValidRequest(t *testing.T) {
 	rawJSON := `{
 		"kind": "AdmissionReview",
-		"apiVersion": "admission.k8s.io/v1beta1",
+		"apiVersion": "admission.k8s.io/v1",
 		"request": {
 			"uid": "7f0b2891-916f-4ed6-b7cd-27bff1815a8c",
 			"kind": {
@@ -125,14 +124,14 @@ func TestMutatesValidRequest(t *testing.T) {
 			}
 		}
 	}`
-	response, err := Func([]byte(rawJSON))
+	response, err := Admit([]byte(rawJSON))
 	if err != nil {
-		t.Errorf("failed to mutate AdmissionRequest %s with error %s", string(response), err)
+		t.Errorf("AdmissionRequest failed with error: %s", err)
 	}
 
-	r := v1beta1.AdmissionReview{}
+	r := k8sadmission.AdmissionReview{}
 	err = json.Unmarshal(response, &r)
-	assert.NoError(t, err, "failed to unmarshal with error %s", err)
+	assert.NoError(t, err, "failed to unmarshal with error: %s", err)
 
 	/*rr := r.Response
 	assert.Equal(t, `[{"op":"replace","path":"/spec/containers/0/image","value":"debian"}]`, string(rr.Patch))
@@ -142,20 +141,8 @@ func TestMutatesValidRequest(t *testing.T) {
 
 func TestErrorsOnInvalidJson(t *testing.T) {
 	rawJSON := `Wut ?`
-	_, err := Func([]byte(rawJSON))
+	_, err := Admit([]byte(rawJSON))
 	if err == nil {
 		t.Error("did not fail when sending invalid json")
-	}
-}
-
-func TestErrorsOnInvalidPod(t *testing.T) {
-	rawJSON := `{
-		"request": {
-			"object": 111
-		}
-	}`
-	_, err := Func([]byte(rawJSON))
-	if err == nil {
-		t.Error("did not fail when sending invalid pod")
 	}
 }

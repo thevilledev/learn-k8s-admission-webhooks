@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/thevilledev/learn-admission-controllers/pkg/server"
+	"github.com/thevilledev/learn-admission-controllers/internal/server"
 )
 
 const (
@@ -13,12 +13,12 @@ const (
 	defaultKeyPath    = "/run/secrets/tls/tls.key"
 )
 
-func getenv(key, fallback string) string {
-	value := os.Getenv(key)
-	if len(value) == 0 {
-		return fallback
+func getenv(k, d string) string {
+	v := os.Getenv(k)
+	if len(v) == 0 {
+		return d
 	}
-	return value
+	return v
 }
 
 func main() {
